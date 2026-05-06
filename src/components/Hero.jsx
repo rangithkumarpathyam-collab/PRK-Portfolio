@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const Hero = () => {
@@ -11,7 +11,6 @@ const Hero = () => {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.92]);
   const y = useTransform(scrollYProgress, [0, 0.5], [0, 80]);
-  const blur = useTransform(scrollYProgress, [0, 0.5], [0, 8]);
 
   const textVariants = {
     hidden: { opacity: 0, y: 40, filter: 'blur(10px)' },
@@ -21,8 +20,63 @@ const Hero = () => {
     })
   };
 
+  // Draggable State for Buttons
+  const [btn1Pos, setBtn1Pos] = useState({ x: 0, y: 0 });
+  const [btn2Pos, setBtn2Pos] = useState({ x: 0, y: 0 });
+  const [isDragging1, setIsDragging1] = useState(false);
+  const [isDragging2, setIsDragging2] = useState(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e, btnId) => {
+    if (e.button === 2) { // Right click
+      e.preventDefault();
+      if (btnId === 1) setIsDragging1(true);
+      else setIsDragging2(true);
+      
+      const currentPos = btnId === 1 ? btn1Pos : btn2Pos;
+      dragOffset.current = {
+        x: e.clientX - currentPos.x,
+        y: e.clientY - currentPos.y
+      };
+    }
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isDragging1) {
+        setBtn1Pos({
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y
+        });
+      }
+      if (isDragging2) {
+        setBtn2Pos({
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging1(false);
+      setIsDragging2(false);
+    };
+
+    if (isDragging1 || isDragging2) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging1, isDragging2]);
+
+  const preventContext = (e) => e.preventDefault();
+
   return (
-    <section ref={sectionRef} id="home" className="relative pt-40 pb-24 overflow-hidden min-h-screen flex items-center">
+    <section ref={sectionRef} id="home" className="relative pt-40 pb-24 overflow-hidden min-h-screen flex items-center bg-dark">
       <motion.div
         style={{ opacity, scale, y }}
         className="container-custom relative z-10 text-center"
@@ -48,7 +102,7 @@ const Hero = () => {
             whileInView="visible"
             viewport={{ once: false, amount: 0.5 }}
             variants={textVariants}
-            className="text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-tight mb-6"
+            className="text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-tight mb-6 text-white"
           >
             Hi, I'm <span className="text-primary">Ranjith</span>
             <br />
@@ -74,24 +128,41 @@ const Hero = () => {
             whileInView="visible"
             viewport={{ once: false, amount: 0.5 }}
             variants={textVariants}
-            className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6"
+            className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 relative"
           >
-            <motion.a
-              whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(67,83,255,0.5)' }}
-              whileTap={{ scale: 0.97 }}
-              href="#projects"
-              className="px-8 py-4 bg-primary text-white rounded-full font-medium shadow-[0_0_20px_rgba(67,83,255,0.4)] w-full sm:w-auto text-center"
+            {/* View My Work Button */}
+            <motion.div
+              style={{ x: btn1Pos.x, y: btn1Pos.y, position: (btn1Pos.x !== 0 || btn1Pos.y !== 0) ? 'fixed' : 'relative', zIndex: 100 }}
+              onMouseDown={(e) => handleMouseDown(e, 1)}
+              onContextMenu={preventContext}
             >
-              View My Work
-            </motion.a>
-            <motion.a
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(51,51,51,0.5)' }}
-              whileTap={{ scale: 0.97 }}
-              href="#contact"
-              className="px-8 py-4 border border-gray-dark text-white rounded-full font-medium w-full sm:w-auto text-center"
+              <motion.a
+                whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(67,83,255,0.5)' }}
+                whileTap={{ scale: 0.97 }}
+                href="#projects"
+                className="px-8 py-4 bg-primary text-white rounded-full font-medium shadow-[0_0_20px_rgba(67,83,255,0.4)] w-full sm:w-auto text-center block"
+                draggable="false"
+              >
+                View My Work
+              </motion.a>
+            </motion.div>
+
+            {/* Get In Touch Button */}
+            <motion.div
+              style={{ x: btn2Pos.x, y: btn2Pos.y, position: (btn2Pos.x !== 0 || btn2Pos.y !== 0) ? 'fixed' : 'relative', zIndex: 100 }}
+              onMouseDown={(e) => handleMouseDown(e, 2)}
+              onContextMenu={preventContext}
             >
-              Get In Touch
-            </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(51,51,51,0.5)' }}
+                whileTap={{ scale: 0.97 }}
+                href="#contact"
+                className="px-8 py-4 border border-gray-dark text-white rounded-full font-medium w-full sm:w-auto text-center block"
+                draggable="false"
+              >
+                Get In Touch
+              </motion.a>
+            </motion.div>
           </motion.div>
 
           {/* Scroll Indicator */}

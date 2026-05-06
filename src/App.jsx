@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from './components/Navbar';
-import AntigravityHero from './components/AntigravityHero';
+import Hero from './components/Hero';
 import Stats from './components/Stats';
 import About from './components/About';
 import Skills from './components/Skills';
@@ -15,7 +15,7 @@ function App() {
       <CustomCursor />
       <Navbar />
       <main className="relative z-10">
-        <AntigravityHero />
+        <Hero />
         <Stats />
         <About />
         <Skills />
