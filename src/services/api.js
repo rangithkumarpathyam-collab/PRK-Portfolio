@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'https://prk-backend.onrender.com/api';
 
 export const getProfile = async () => {
   try {

@@ -21,7 +21,7 @@ const Projects = () => {
       description: 'Generates professional resumes with custom templates, PDF export, and secure data storage.',
       techStack: ['React', 'Node.js', 'MongoDB'],
       features: ['Custom templates', 'PDF export', 'Secure data storage'],
-      linkUrl: 'https://frontend-ten-flax-46.vercel.app/',
+      linkUrl: 'https://official-resume-builder.vercel.app/',
       imageUrl: '/assets/resume-builder.png'
     },
     {
@@ -42,7 +42,7 @@ const Projects = () => {
           return { ...p, videoUrl: 'https://res.cloudinary.com/dv1gjt416/video/upload/v1777102285/project1video_kan851.mp4' };
         }
         if (p.title === 'Resume Builder') {
-          return { ...p, linkUrl: 'https://frontend-ten-flax-46.vercel.app/', imageUrl: '/assets/resume-builder.png' };
+          return { ...p, linkUrl: 'https://official-resume-builder.vercel.app/', imageUrl: '/assets/resume-builder.png' };
         }
         if (p.title === 'Differential Equation Solver') {
           return { ...p, linkUrl: 'https://ode-solver-kappa.vercel.app/', imageUrl: '/assets/ode-solver.png' };
