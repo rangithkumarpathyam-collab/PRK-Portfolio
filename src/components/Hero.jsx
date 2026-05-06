@@ -4,6 +4,9 @@ import Draggable from 'react-draggable';
 
 const Hero = () => {
   const sectionRef = useRef(null);
+  const nodeRef1 = useRef(null);
+  const nodeRef2 = useRef(null);
+  
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"]
@@ -68,27 +71,19 @@ const Hero = () => {
           </motion.p>
 
           {/* CTA Buttons */}
-          <motion.div
-            custom={3}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.5 }}
-            variants={textVariants}
-            className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6"
-          >
+          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 relative">
             {/* View My Work Button */}
-            <Draggable bounds="body">
-              <div className="z-50 cursor-grab active:cursor-grabbing">
+            <Draggable nodeRef={nodeRef1} bounds="body">
+              <div 
+                ref={nodeRef1}
+                className="z-50 cursor-grab active:cursor-grabbing touch-none"
+              >
                 <motion.a
                   whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(67,83,255,0.5)' }}
                   whileTap={{ scale: 0.97 }}
                   href="#projects"
                   className="px-8 py-4 bg-primary text-white rounded-full font-medium shadow-[0_0_20px_rgba(67,83,255,0.4)] w-full sm:w-auto text-center block select-none"
                   draggable="false"
-                  onClick={(e) => {
-                    // Prevent navigation if the button was dragged significantly
-                    // (react-draggable handles this mostly, but good for UX)
-                  }}
                 >
                   View My Work
                 </motion.a>
@@ -96,8 +91,11 @@ const Hero = () => {
             </Draggable>
 
             {/* Get My Work Button */}
-            <Draggable bounds="body">
-              <div className="z-50 cursor-grab active:cursor-grabbing">
+            <Draggable nodeRef={nodeRef2} bounds="body">
+              <div 
+                ref={nodeRef2}
+                className="z-50 cursor-grab active:cursor-grabbing touch-none"
+              >
                 <motion.a
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(51,51,51,0.5)' }}
                   whileTap={{ scale: 0.97 }}
@@ -109,7 +107,7 @@ const Hero = () => {
                 </motion.a>
               </div>
             </Draggable>
-          </motion.div>
+          </div>
 
           {/* Scroll Indicator */}
           <motion.div
