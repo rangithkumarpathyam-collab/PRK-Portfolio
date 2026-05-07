@@ -14,13 +14,13 @@ const Footer = () => {
               B.Tech Data Science Student passionate about building real-world applications with modern web technologies.
             </p>
             <div className="flex space-x-3">
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-dark/40 border border-gray-dark flex items-center justify-center hover:bg-primary hover:border-primary transition-colors text-white text-sm">
+              <a href="https://github.com/rangithkumarpathyam-collab" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-dark/40 border border-gray-dark flex items-center justify-center hover:bg-primary hover:border-primary transition-colors text-white text-sm">
                 GH
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-dark/40 border border-gray-dark flex items-center justify-center hover:bg-primary hover:border-primary transition-colors text-white text-sm">
+              <a href="https://linkedin.com/in/pathyam-ranjith-kumar-1a0579375" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-dark/40 border border-gray-dark flex items-center justify-center hover:bg-primary hover:border-primary transition-colors text-white text-sm">
                 LI
               </a>
-              <a href="mailto:rangithkumar@gmail.com" className="w-10 h-10 rounded-full bg-gray-dark/40 border border-gray-dark flex items-center justify-center hover:bg-primary hover:border-primary transition-colors text-white text-sm">
+              <a href="mailto:rangithkumarpathyam@gmail.com" className="w-10 h-10 rounded-full bg-gray-dark/40 border border-gray-dark flex items-center justify-center hover:bg-primary hover:border-primary transition-colors text-white text-sm">
                 ✉
               </a>
             </div>
@@ -44,7 +44,11 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="text-gray">
                 <span className="text-white font-medium">Email:</span><br />
-                rangithkumar@gmail.com
+                <a href="mailto:rangithkumarpathyam@gmail.com" className="hover:text-primary transition-colors">rangithkumarpathyam@gmail.com</a>
+              </li>
+              <li className="text-gray">
+                <span className="text-white font-medium">Phone:</span><br />
+                <a href="tel:+917416960828" className="hover:text-primary transition-colors">+91 7416960828</a>
               </li>
               <li className="text-gray">
                 <span className="text-white font-medium">Location:</span><br />
