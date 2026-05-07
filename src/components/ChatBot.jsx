@@ -1,18 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ─── Multi-Key Fallback Configuration ───
-const API_KEYS = [
-  'AIzaSyDeUxuz8b7IeY5lacCdvrnlBVOh6TU0nIQ',  // Primary key
-  'AIzaSyApJvKK8hmEPaYAOwIcYbN51wkXExXDuhk',  // Alternate key (Gemini API Key)
-];
+// ─── Groq Configuration ───
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || 'YOUR_GROQ_API_KEY_HERE';
 
-const MODELS = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
+const MODELS = ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
 
-const buildEndpoint = (key, model) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+const API_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
-const SYSTEM_CONTEXT = `You are Ranjith Kumar's AI portfolio assistant. Ranjith is a B.Tech Data Science student and aspiring web developer who builds real-world applications.
+const SYSTEM_PROMPT = `You are Ranjith Kumar's AI portfolio assistant. Ranjith is a B.Tech Data Science student and aspiring web developer who builds real-world applications.
 
 His key projects include:
 - ODE Solver: A differential equation solver with step-by-step solutions
@@ -23,9 +19,6 @@ His key projects include:
 His skills include: React, Node.js, MongoDB, Express, Python, JavaScript, TailwindCSS, Git, and more.
 
 Be friendly, concise, and helpful. Keep responses under 3 sentences unless the visitor asks for detail. If asked something unrelated, politely redirect to Ranjith's work.`;
-
-// Tracks which key index worked last — avoids re-trying dead keys first
-let lastWorkingKeyIndex = 0;
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,16 +46,23 @@ const ChatBot = () => {
   }, [isOpen]);
 
   /**
-   * Attempts a single API call to a specific key + model combo.
+   * Attempts an OpenAI API call with a specific model.
    * Returns { ok: true, text } on success, or { ok: false, status } on failure.
    */
-  const tryApiCall = async (apiKey, model, requestBody) => {
-    const endpoint = buildEndpoint(apiKey, model);
+  const tryApiCall = async (model, openaiMessages) => {
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(API_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: openaiMessages,
+          max_tokens: 300,
+          temperature: 0.7,
+        }),
       });
 
       if (!response.ok) {
@@ -71,7 +71,7 @@ const ChatBot = () => {
 
       const data = await response.json();
       const text =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        data?.choices?.[0]?.message?.content ||
         "I couldn't generate a response. Please try again.";
       return { ok: true, text };
     } catch (err) {
@@ -80,9 +80,9 @@ const ChatBot = () => {
   };
 
   /**
-   * Core send logic with multi-key + multi-model fallback.
-   * Priority: last working key first → try other keys → try other models.
-   * Each key/model combo gets up to 2 retries on 429 with backoff.
+   * Core send logic with multi-model fallback.
+   * Tries gpt-4o-mini first, falls back to gpt-3.5-turbo.
+   * Each model gets up to 2 retries on 429 (rate limit) with backoff.
    */
   const sendMessage = async () => {
     const trimmed = input.trim();
@@ -93,76 +93,36 @@ const ChatBot = () => {
     setInput('');
     setIsLoading(true);
 
-    try {
-      const history = messages
-        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
-        .join('\n');
+    // Build OpenAI messages array from conversation history
+    const openaiMessages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...messages.map((m) => ({
+        role: m.role === 'bot' ? 'assistant' : 'user',
+        content: m.text,
+      })),
+      { role: 'user', content: trimmed },
+    ];
 
-      const fullPrompt = `${SYSTEM_CONTEXT}\n\nConversation so far:\n${history}\nUser: ${trimmed}\nAssistant:`;
-      const requestBody = JSON.stringify({
-        contents: [{ parts: [{ text: fullPrompt }] }],
-      });
+    for (const model of MODELS) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await tryApiCall(model, openaiMessages);
 
-      // Build ordered list of keys: start with the last working one
-      const keyOrder = [
-        lastWorkingKeyIndex,
-        ...API_KEYS.map((_, i) => i).filter((i) => i !== lastWorkingKeyIndex),
-      ];
-
-      let succeeded = false;
-
-      for (const keyIdx of keyOrder) {
-        const apiKey = API_KEYS[keyIdx];
-
-        for (const model of MODELS) {
-          // Try up to 2 retries per key+model on rate limit
-          for (let attempt = 0; attempt < 2; attempt++) {
-            const result = await tryApiCall(apiKey, model, requestBody);
-
-            if (result.ok) {
-              lastWorkingKeyIndex = keyIdx;
-              setMessages((prev) => [...prev, { role: 'bot', text: result.text }]);
-              succeeded = true;
-              break;
-            }
-
-            // 429 = rate limited → wait and retry same key+model
-            if (result.status === 429 && attempt === 0) {
-              await new Promise((r) => setTimeout(r, 2000));
-              continue;
-            }
-
-            // 400 = bad model name → skip to next model
-            if (result.status === 400) break;
-
-            // 403/404 = key invalid or model unavailable → skip
-            break;
-          }
-
-          if (succeeded) break;
+        if (result.ok) {
+          setMessages((prev) => [...prev, { role: 'bot', text: result.text }]);
+          setIsLoading(false);
+          return;
         }
 
-        if (succeeded) break;
-      }
+        if (result.status === 429 && attempt === 0) {
+          await new Promise((r) => setTimeout(r, 2000));
+          continue;
+        }
 
-      if (!succeeded) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'error',
-            text: "I'm having trouble connecting right now. Please try again in a moment.",
-          },
-        ]);
+        break;
       }
-    } catch (err) {
-      console.error('ChatBot Error:', err);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'error', text: 'Something went wrong. Please try again later.' },
-      ]);
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e) => {
@@ -274,8 +234,6 @@ const ChatBot = () => {
                   className={`max-w-[82%] px-4 py-3 text-sm leading-relaxed break-words ${
                     msg.role === 'user'
                       ? 'self-end bg-gradient-to-br from-primary to-purple-600 text-white rounded-2xl rounded-br-sm'
-                      : msg.role === 'error'
-                      ? 'self-start bg-red-500/10 border border-red-500/20 text-red-300 rounded-2xl rounded-bl-sm'
                       : 'self-start bg-white/[0.06] border border-white/[0.06] text-white rounded-2xl rounded-bl-sm'
                   }`}
                 >
